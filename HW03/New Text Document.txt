@@ -1,0 +1,25 @@
+an associative entity for case and defendant
+
+total and disjoint will have a column forces to be type a OR B using not null and  trigger
+disjoint = 1 column type
+overlap = no type column
+
+total  = not null
+partial = can be null
+
+Questions
+-------------
+can we have ClientType as null - CANNOT HAVE NULL judge can be person
+what is an award decimal
+datatype of requestedJudgement	- decimal
+
+------------------------
+
+all relevant relations, 
+columns, 
+relationships are included; 
+foreign keys 
+primary keys are correctly specified; relationships,
+complex/multivalued attributes are decomposed;
+diagram is consistent with business rules and
+assumptions

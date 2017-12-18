@@ -1,0 +1,46 @@
+each entity must have a unique ID
+  can make an instance of .
+  can be an event integrating 2 or more entities like transaction
+
+check for  
+---------
+datatypes 
+      all ids -> char
+All attris in Caps
+all connects have names
+all attris have a prim key
+both side cardis
+associt are 1 to many on both sides
+
+
+
+
+patients
+------------
+ID  String req
+Name String req
+Age  Integer req
+Address String req
+phone no Integer req
+email id String opt
+isInsurance Boolean req 
+InsComp opt
+
+service
+-----------
+ID String
+Name (xray,surgery,tests) String
+cost Decimal
+physician {ref} object
+
+Transaction
+----------------
+
+Hospital
+------------
+
+Medicines
+----------------
+
+Insurance Company 
+-------------------

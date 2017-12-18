@@ -1,0 +1,248 @@
+USE [CIS_ZZZ]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_FindHashCC]    Script Date: 05/06/2013 08:14:46 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date,,>
+-- Description:	<Description,,>
+-- =============================================
+CREATE PROCEDURE [dbo].[sp_FindHashCC] 
+	-- Add the parameters for the stored procedure here
+	@CC varchar(16)
+AS
+BEGIN
+	SELECT * from CreditCard where Hash=convert(varchar(max),HASHBYTES('SHA1', @CC),2)
+END
+GO
+
+USE [CIS655]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_HashCC]    Script Date: 05/06/2013 08:17:04 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date,,>
+-- Description:	<Description,,>
+-- =============================================
+CREATE PROCEDURE [dbo].[sp_HashCC] 
+	-- Add the parameters for the stored procedure here
+	@CC varchar(16)
+AS
+BEGIN
+	SELECT convert(varchar(max),HASHBYTES('SHA1', @CC),2)
+END
+GO
+
+USE [CIS655]
+GO
+/****** Object:  StoredProcedure [dbo].[sp_insertCC]    Script Date: 05/06/2013 08:17:34 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date,,>
+-- Description:	<Description,,>
+-- =============================================
+CREATE PROCEDURE [dbo].[sp_insertCC] 
+	-- Add the parameters for the stored procedure here
+	@clientID int, @CC varchar(16), @expDate varchar(10), @lastFour varchar(4)
+AS
+BEGIN
+
+	OPEN SYMMETRIC KEY CreditCardKey DECRYPTION BY certificate CreditCardCert;
+
+	INSERT INTO CreditCard VALUES (CIS655.dbo.HashCC(@CC),
+		EncryptByKey(Key_GUID('CreditCardKey'), @CC),
+		@CC, @lastFour, 1, @expDate, @clientID);
+	IF @@ERROR <> 0 
+	  BEGIN
+		CLOSE SYMMETRIC KEY CreditCardKey;
+		RETURN(1)
+	  END
+	ELSE
+	  BEGIN
+		CLOSE SYMMETRIC KEY CreditCardKey;
+--		RETURN(0)
+	  END
+END
+GO
+
+USE [CIS655]
+GO
+
+/****** Object:  StoredProcedure [dbo].[sp_retrieveCC]    Script Date: 05/06/2013 08:17:45 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date,,>
+-- Description:	<Description,,>
+-- =============================================
+CREATE PROCEDURE [dbo].[sp_retrieveCC] 
+	-- Add the parameters for the stored procedure here
+	@clientID int
+AS
+BEGIN
+
+  SELECT convert (varchar, DecryptByKeyAutoCert(cert_id('CreditCardCert'), NULL, Encrypted)) 
+  as DecryptedCC, ExpirationDate
+  from CreditCard where clientID = @clientID;
+
+END
+GO
+
+
+
+USE [CIS655]
+GO
+/****** Object:  UserDefinedFunction [dbo].[HashCC]    Script Date: 04/26/2012 09:27:48 ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- =============================================
+-- Author:		<Author,,Name>
+-- Create date: <Create Date, ,>
+-- Description:	<Description, ,>
+-- =============================================
+CREATE FUNCTION [dbo].[HashCC] 
+(
+	-- Add the parameters for the function here
+	@CC varchar(16)
+)
+RETURNS varchar(max)
+AS
+BEGIN
+	-- Declare the return variable here
+	DECLARE @Result varchar(max)
+
+	-- Add the T-SQL statements to compute the return value here
+	SELECT @Result = convert(varchar(max),HASHBYTES('SHA1', @CC),2)
+
+	-- Return the result of the function
+	RETURN @Result
+
+END
+GO
+
+SET ANSI_NULLS ON
+SET QUOTED_IDENTIFIER ON
+SET ANSI_PADDING ON
+GO
+
+
+CREATE TABLE [dbo].[Client](
+	[ClientID] [int] NOT NULL,
+	[FirstName] [nvarchar](50) NOT NULL,
+	[LastName] [nvarchar](50) NOT NULL,
+ CONSTRAINT [PK_Client] PRIMARY KEY CLUSTERED 
+(
+	[ClientID] ASC
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+CREATE TABLE [dbo].[CreditCard](
+	[Hash] [varchar](100) NOT NULL,
+	[Encrypted] [varbinary](400) NOT NULL,
+	[PlainText] [varchar](16) NOT NULL,
+	[LastFour] [char](4) NOT NULL,
+	[ServiceCode] [int] NOT NULL,
+	[ExpirationDate] [date] NOT NULL,
+	[ClientID] [int] NOT NULL,
+ CONSTRAINT [PK_CreditCard] PRIMARY KEY CLUSTERED 
+(
+	[Hash] ASC
+)WITH (PAD_INDEX  = OFF, STATISTICS_NORECOMPUTE  = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS  = ON, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+
+ALTER TABLE [dbo].[CreditCard]  WITH CHECK ADD  CONSTRAINT [FK_Client_CreditCard] FOREIGN KEY([ClientID])
+REFERENCES [dbo].[Client]([ClientID])
+GO
+
+ALTER TABLE [dbo].[CreditCard] CHECK CONSTRAINT [FK_Client_CreditCard]
+GO
+
+SET ANSI_PADDING OFF
+GO
+
+
+
+CREATE MASTER KEY ENCRYPTION BY password = 'Sup3rS3cr3tP@ssw0rd';
+
+--BACKUP MASTER KEY TO FILE = 'masterkey.key' ENCRYPTION BY PASSWORD = 'Sup3rS3cr3tP@ssw0rd'
+
+CREATE CERTIFICATE CreditCardCert WITH SUBJECT = 'CreditCard';
+
+CREATE SYMMETRIC KEY CreditCardKey WITH ALGORITHM = AES_256
+ENCRYPTION BY CERTIFICATE CreditCardCert;
+
+OPEN SYMMETRIC KEY CreditCardKey DECRYPTION BY certificate CreditCardCert;
+
+GRANT CONTROL on certificate::[CreditCardCert] TO stephen;
+GRANT VIEW DEFINITION on symmetric key::[CreditCardKey] TO stephen;
+GRANT EXECUTE on sp_insertCC to stephen;
+GRANT EXECUTE on sp_retrieveCC to stephen;
+
+
+
+
+-- These statements are for experimenting with the DB...
+
+INSERT INTO Client VALUES (1, 'Joe', 'Smith');
+
+INSERT INTO CreditCard VALUES (CIS655.dbo.HashCC('4110144110144115'),
+EncryptByKey(Key_GUID('CreditCardKey'), '4110144110144115'),
+'4110144110144115', '4115', 1, '12/15/2015', 1);
+
+SELECT * from CreditCard;
+
+SELECT * from CreditCard where HASH= CIS655.dbo.HashCC('4110144110144115');
+
+SELECT Hash, convert (varchar, DecryptByKey(Encrypted)) AS Decrypted, PlainText
+from CreditCard;
+
+SELECT Hash, 
+convert (varchar, DecryptByKeyAutoCert(cert_id('CreditCardCert'), NULL, Encrypted)) AS Decrypted, 
+Plaintext, LastFour, ServiceCode, ExpirationDate 
+from CreditCard;
+
+CREATE VIEW DecryptedCC AS
+	SELECT convert (varchar, DecryptByKey(Encrypted)) as Decrypted, LastFour, ExpirationDate
+	FROM CreditCard;
+
+SELECT * from DecryptedCC Where LastFour=4115;
+
+
+DELETE FROM CreditCard where PlainText='4110144110144115';
+
+DROP PROCEDURE sp_FindHashCC;
+DROP PROCEDURE sp_HashCC;
+DROP PROCEDURE sp_insertCC;
+DROP PROCEDURE sp_retrieveCC;
+DROP FUNCTION HashCC;
+
+
+CLOSE SYMMETRIC KEY CreditCardKey;
+
+DROP SYMMETRIC KEY CreditCardKey;
+DROP CERTIFICATE CreditCardCert;
+DROP MASTER KEY;
+
+DROP VIEW DecryptedCC;
+DROP TABLE CreditCard;
+DROP TABLE Client;
+DROP TABLE CC_DATA;
+GO

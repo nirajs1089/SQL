@@ -1,0 +1,24 @@
+USE [CIS655_Shah_N]
+GO
+
+/****** Object:  Table [dbo].[CASE_T]    Script Date: 5/16/2016 8:37:18 PM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[CASE_T](
+	[CaseID] [int] NOT NULL,
+	[Description] [nvarchar](50) NOT NULL,
+	[DateOpened] [date] NOT NULL,
+	[DateClosed] [date] NULL,
+	[Award] [nchar](10) NULL,
+ CONSTRAINT [PK_CASE_T] PRIMARY KEY CLUSTERED 
+(
+	[CaseID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+

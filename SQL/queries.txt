@@ -1,0 +1,7 @@
+SELECT distinct
+SELECT *
+order by asc
+order by desc
+group by
+where = 
+where like
