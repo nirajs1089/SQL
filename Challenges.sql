@@ -21,7 +21,7 @@ from
 
         inner join 
 
-
+# testing
         (select cntChg as chlg,count(cntChg) as times
         from (
                 select Challenges.hacker_id,Hackers.name,count(challenge_id) as cntChg
